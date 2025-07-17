@@ -165,7 +165,38 @@ namespace SearchTrees {
       }
       return new_node;
     }
-    // void erase(KeyT key);
+    bool erase(KeyT key) {
+      iterator node = find(key);
+      if (node == end())
+        return false;
+
+      if (node->left_ && node->right_) {
+        for (auto it = node->left_;; it = it->right_) {
+          if (!it->right_) {
+            it->right_ = node->right_;
+            node->right_->parent_ = it;
+            break;
+          }
+        }
+      }
+      iterator new_node = node->left_ ? node->left_ : node->right_;
+      if (new_node) {
+        new_node->parent_ = node->parent_;
+      }
+      if (node->parent_) {
+        assert(node->parent_->left_ == node || node->parent_->right_ == node);
+        if (node->parent_->left_ == node) {
+          node->parent_->left_ = new_node;
+        } else {
+          node->parent_->right_ = new_node;
+        }
+      } else {
+        assert(root_ == node);
+        root_ = new_node;
+      }
+      delete node;
+      return true;
+    }
   };
 
 }
