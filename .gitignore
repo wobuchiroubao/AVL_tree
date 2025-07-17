@@ -1,0 +1,4 @@
+.vscode/
+build/
+valgrind-out.txt
+src/main
