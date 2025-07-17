@@ -9,9 +9,9 @@ namespace SearchTrees {
   struct AVL_Node {
     KeyT key_;
     AVL_Node *parent_ = nullptr, *left_ = nullptr, *right_ = nullptr;
-    int height_ = 0;
+    int height_ = 1;
 
-    explicit AVL_Node(const KeyT &key, AVL_Node *parent = nullptr, int height = 0) : key_(key), parent_(parent), height_(height) {}
+    explicit AVL_Node(const KeyT &key, AVL_Node *parent = nullptr, int height = 1) : key_(key), parent_(parent), height_(height) {}
   };
 
   template <typename KeyT>
@@ -72,13 +72,105 @@ namespace SearchTrees {
 
   private: // rotations
     int calc_height(iterator node) {
-      return node->right_->height_ - node->left_->height_;
+      return std::max(
+        (node->left_ ? node->left_->height_ : 0),
+        (node->right_ ? node->right_->height_ : 0)
+      ) + 1;
+    }
+    int calc_balance_factor(iterator node) {
+      return (
+        (node->right_ ? node->right_->height_ : 0)
+        - (node->left_ ? node->left_->height_ : 0));
     }
 
-    // iterator rotate_left(iterator sub_root, iterator right_child) {}
-    // iterator rotate_right(iterator sub_root, iterator left_child) {}
-    // iterator rotate_left_right() {}
-    // iterator rotate_right_left() {}
+    void simple_rotate_swap_parent(iterator sub_root, iterator child) {
+      iterator &sub_root_parent = sub_root->parent_;
+      if (sub_root_parent) {
+        assert(sub_root_parent->left_ == sub_root || sub_root_parent->right_ == sub_root);
+        if (sub_root_parent->left_ == sub_root) {
+          sub_root_parent->left_ = child;
+        } else {
+          sub_root_parent->right_ = child;
+        }
+        child->parent_ = sub_root_parent;
+      } else {
+        assert(root_ == sub_root);
+        root_ = child;
+        child->parent_ = nullptr;
+      }
+    }
+
+    iterator rotate_left(iterator sub_root, iterator right_child) {
+      assert(sub_root->right_ == right_child && right_child->parent_ == sub_root);
+
+      simple_rotate_swap_parent(sub_root, right_child);
+
+      sub_root->right_ = right_child->left_;
+      if (sub_root->right_)
+        sub_root->right_->parent_ = sub_root;
+      right_child->left_ = sub_root;
+      sub_root->parent_ = right_child;
+
+      sub_root->height_ = calc_height(sub_root);
+      right_child->height_ = calc_height(right_child);
+
+      return right_child;
+    }
+
+    iterator rotate_right(iterator sub_root, iterator left_child) {
+      assert(sub_root->left_ == left_child && left_child->parent_ == sub_root);
+
+      simple_rotate_swap_parent(sub_root, left_child);
+
+      sub_root->left_ = left_child->right_;
+      if (sub_root->left_)
+        sub_root->left_->parent_ = sub_root;
+      left_child->right_ = sub_root;
+      sub_root->parent_ = left_child;
+
+      sub_root->height_ = calc_height(sub_root);
+      left_child->height_ = calc_height(left_child);
+
+      return left_child;
+    }
+
+    iterator rotate_left_right(iterator sub_root, iterator left_child) {
+      assert(left_child->right_);
+      iterator new_child = rotate_left(left_child, left_child->right_);
+      rotate_right(sub_root, new_child);
+      return new_child;
+    }
+
+    iterator rotate_right_left(iterator sub_root, iterator right_child) {
+      assert(right_child->left_);
+      iterator new_child = rotate_right(right_child, right_child->left_);
+      rotate_left(sub_root, new_child);
+      return new_child;
+    }
+
+    void retrace(iterator start) {
+      for (auto child = start; child->parent_ != nullptr; child = child->parent_) {
+        iterator &parent = child->parent_;
+        assert(parent->left_ == child || parent->right_ == child);
+        parent->height_ = calc_height(parent);
+        int par_bf = calc_balance_factor(parent);
+        int ch_bf = calc_balance_factor(child);
+
+        if (par_bf == 2) {
+          if (ch_bf == 1) {
+            rotate_left(parent, child);
+          } else {
+            rotate_right_left(parent, child);
+          }
+        } else if (par_bf == -2) {
+          if (ch_bf == 1) {
+            rotate_left_right(parent, child);
+          } else {
+            rotate_right(parent, child);
+          }
+        }
+      }
+    }
 
   public: // selectors
     iterator root() { return root_; }
@@ -135,7 +227,7 @@ namespace SearchTrees {
     void print() {
       depth_traversal(
         PRE,
-        [](iterator it, size_t depth) {
+        [this](iterator it, size_t depth) {
           std::cout << std::string(depth, '\t');
           if (it->parent_) {
             if (it->parent_->left_ == it)
@@ -143,7 +235,7 @@ namespace SearchTrees {
             else
               std::cout << "R: ";
           }
-          std::cout << "(" << it->key_ << "; " << it->height_ << ")" << std::endl;
+          std::cout << "(" << it->key_ << "; " << it->height_ << "; " << calc_balance_factor(it) << ")" << std::endl;
         }
       );
     }
@@ -180,8 +272,11 @@ namespace SearchTrees {
           }
         }
       }
+      retrace(new_node);
+
       return new_node;
     }
+
     bool erase(KeyT key) {
       iterator node = find(key);
       if (node == end())
