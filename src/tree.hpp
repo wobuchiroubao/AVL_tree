@@ -60,6 +60,7 @@ namespace SearchTrees {
   public: // ctors & dtors
     AVL_Tree() {}
     AVL_Tree(const AVL_Tree &other) = delete;
+    AVL_Tree(AVL_Tree &&other) : root_(other.root_) { other.root_ = nullptr; }
     ~AVL_Tree() {
       depth_traversal(
         POST,
@@ -69,6 +70,13 @@ namespace SearchTrees {
       );
     }
     AVL_Tree& operator= (const AVL_Tree &rhs) = delete;
+    AVL_Tree& operator= (AVL_Tree &&rhs) {
+      if (this == &rhs)
+        return *this;
+
+      std::swap(root_, rhs.root_);
+      return *this;
+    }
 
   private: // rotations
     int calc_height(iterator node) const {
