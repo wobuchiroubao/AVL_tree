@@ -71,13 +71,13 @@ namespace SearchTrees {
     AVL_Tree& operator= (const AVL_Tree &rhs) = delete;
 
   private: // rotations
-    int calc_height(iterator node) {
+    int calc_height(iterator node) const {
       return std::max(
         (node->left_ ? node->left_->height_ : 0),
         (node->right_ ? node->right_->height_ : 0)
       ) + 1;
     }
-    int calc_balance_factor(iterator node) {
+    int calc_balance_factor(iterator node) const {
       return (
         (node->right_ ? node->right_->height_ : 0)
         - (node->left_ ? node->left_->height_ : 0));
@@ -100,7 +100,7 @@ namespace SearchTrees {
       }
     }
 
-    iterator rotate_left(iterator sub_root, iterator right_child) {
+    iterator rotate_left(iterator sub_root, iterator right_child) & {
       assert(sub_root->right_ == right_child && right_child->parent_ == sub_root);
 
       simple_rotate_swap_parent(sub_root, right_child);
@@ -117,7 +117,7 @@ namespace SearchTrees {
       return right_child;
     }
 
-    iterator rotate_right(iterator sub_root, iterator left_child) {
+    iterator rotate_right(iterator sub_root, iterator left_child) & {
       assert(sub_root->left_ == left_child && left_child->parent_ == sub_root);
 
       simple_rotate_swap_parent(sub_root, left_child);
@@ -134,14 +134,14 @@ namespace SearchTrees {
       return left_child;
     }
 
-    iterator rotate_left_right(iterator sub_root, iterator left_child) {
+    iterator rotate_left_right(iterator sub_root, iterator left_child) & {
       assert(left_child->right_);
       iterator new_child = rotate_left(left_child, left_child->right_);
       rotate_right(sub_root, new_child);
       return new_child;
     }
 
-    iterator rotate_right_left(iterator sub_root, iterator right_child) {
+    iterator rotate_right_left(iterator sub_root, iterator right_child) & {
       assert(right_child->left_);
       iterator new_child = rotate_right(right_child, right_child->left_);
       rotate_left(sub_root, new_child);
@@ -173,22 +173,27 @@ namespace SearchTrees {
     }
 
   public: // selectors
-    iterator root() { return root_; }
-    iterator end() { return nullptr; }
+    const_iterator root() const & { return root_; }
+    iterator root() & { return root_; }
+    const_iterator end() const & { return nullptr; }
+    iterator end() & { return nullptr; }
     bool empty() const { return !root_; }
-    bool contains(KeyT key) {
+    bool contains(KeyT key) const {
       iterator node = find(key);
       return node != end();
     }
-    iterator find(KeyT key) {
-      iterator lb = lower_bound(key);
+    const_iterator find(KeyT key) const & {
+      const_iterator lb = lower_bound(key);
       return (lb && lb->key_ == key) ? lb : end();
     }
-    iterator lower_bound(KeyT key) {
+    iterator find(KeyT key) & {
+      return const_cast<iterator>(const_cast<const AVL_Tree*>(this)->find(key));
+    }
+    const_iterator lower_bound(KeyT key) const & {
       if (empty())
         return end();
 
-      iterator cur_min = end();
+      const_iterator cur_min = end();
       for (auto it = root_;;) {
         if (it->key_ < key) {
           if (!it->right_)
@@ -204,11 +209,14 @@ namespace SearchTrees {
         }
       }
     }
-    iterator upper_bound(KeyT key) {
+    iterator lower_bound(KeyT key) & {
+      return const_cast<iterator>(const_cast<const AVL_Tree*>(this)->lower_bound(key));
+    }
+    const_iterator upper_bound(KeyT key) const & {
       if (empty())
         return end();
 
-      iterator cur_min = end();
+      const_iterator cur_min = end();
       for (auto it = root_;;) {
         if (it->key_ < key || it->key_ == key) {
           if (!it->right_)
@@ -222,7 +230,9 @@ namespace SearchTrees {
         }
       }
     }
-    // int distance(iterator begin, iterator end) const;
+    iterator upper_bound(KeyT key) & {
+      return const_cast<iterator>(const_cast<const AVL_Tree*>(this)->upper_bound(key));
+    }
 
     void print() {
       depth_traversal(
@@ -241,7 +251,7 @@ namespace SearchTrees {
     }
 
   public: // modifiers
-    iterator insert(KeyT key) {
+    iterator insert(KeyT key) & {
       if (!root_) {
         root_ = new AVL_Node<KeyT>{key};
         return root_;
@@ -277,7 +287,7 @@ namespace SearchTrees {
       return new_node;
     }
 
-    bool erase(KeyT key) {
+    bool erase(KeyT key) & {
       iterator node = find(key);
       if (node == end())
         return false;
