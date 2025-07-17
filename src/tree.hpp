@@ -112,7 +112,24 @@ namespace SearchTrees {
         }
       }
     }
-    // iterator upper_bound(KeyT key) {}
+    iterator upper_bound(KeyT key) {
+      if (empty())
+        return end();
+
+      iterator cur_min = end();
+      for (auto it = root_;;) {
+        if (it->key_ < key || it->key_ == key) {
+          if (!it->right_)
+            return cur_min;
+          it = it->right_;
+        } else {
+          cur_min = it;
+          if (!it->left_)
+            return cur_min;
+          it = it->left_;
+        }
+      }
+    }
     // int distance(iterator begin, iterator end) const;
 
     void print() {
