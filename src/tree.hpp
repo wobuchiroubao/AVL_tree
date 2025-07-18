@@ -159,25 +159,30 @@ namespace SearchTrees {
     }
 
     void retrace(iterator start) {
-      for (auto child = start; child->parent_ != nullptr; child = child->parent_) {
-        iterator &parent = child->parent_;
-        assert(parent->left_ == child || parent->right_ == child);
-        parent->height_ = calc_height(parent);
-        int par_bf = calc_balance_factor(parent);
-        int ch_bf = calc_balance_factor(child);
+      for (auto node = start; node != nullptr; node = node->parent_) {
+        node->height_ = calc_height(node);
+        int bf = calc_balance_factor(node);
 
-        if (par_bf == 2) {
-          if (ch_bf == 1) {
-            rotate_left(parent, child);
-          } else {
-            rotate_right_left(parent, child);
+        if (std::abs(bf) == 2) {
+          iterator child = (bf < 0) ? node->left_ : node->right_;
+          assert(child);
+          int ch_bf = calc_balance_factor(child);
+
+          if (bf == -2) { // left heavy
+            if (ch_bf == 1) { // ch right heavy
+              rotate_left_right(node, child);
+            } else { // ch left heavy
+              rotate_right(node, child);
+            }
+          } else if (bf == 2) { // right heavy
+            if (ch_bf == 1) { // ch right heavy
+              rotate_left(node, child);
+            } else { // ch left heavy
+              rotate_right_left(node, child);
+            }
           }
-        } else if (par_bf == -2) {
-          if (ch_bf == 1) {
-            rotate_left_right(parent, child);
-          } else {
-            rotate_right(parent, child);
-          }
+        } else if (bf == 0) {
+          break;
         }
       }
     }
@@ -305,7 +310,7 @@ namespace SearchTrees {
           }
         }
       }
-      retrace(new_node);
+      retrace(new_node->parent_);
 
       return new_node;
     }
