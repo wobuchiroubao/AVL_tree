@@ -25,11 +25,11 @@ namespace SearchTrees {
     enum order_t { PRE, POST };
 
     template <typename Func>
-    void depth_traversal(order_t order, Func func) {
+    void depth_traversal(iterator root, order_t order, Func func) {
       visited_children_t visited = NONE;
       size_t depth = 0;
 
-      for (auto it = root_; it != nullptr;) {
+      for (auto it = root; it != nullptr;) {
         if (order == PRE && visited == NONE)
           func(it, depth);
         if (it->left_ && visited == NONE) {
@@ -40,9 +40,10 @@ namespace SearchTrees {
           visited = NONE;
           ++depth;
         } else {
-          if (it->parent_) {
-            assert(it->parent_->left_ == it || it->parent_->right_ == it);
-            if (it->parent_->left_ == it) {
+          iterator parent = it != root ? it->parent_ : nullptr;
+          if (parent) {
+            assert(parent->left_ == it || parent->right_ == it);
+            if (parent->left_ == it) {
               visited = LEFT;
             } else {
               visited = RIGHT;
@@ -50,7 +51,7 @@ namespace SearchTrees {
             --depth;
           }
           iterator tmp = it;
-          it = it->parent_;
+          it = parent;
           if (order == POST)
             func(tmp, depth);
         }
@@ -63,6 +64,7 @@ namespace SearchTrees {
     AVL_Tree(AVL_Tree &&other) : root_(other.root_) { other.root_ = nullptr; }
     ~AVL_Tree() {
       depth_traversal(
+        root_,
         POST,
         [](iterator it, size_t _) {
           delete it;
@@ -244,6 +246,7 @@ namespace SearchTrees {
 
     void print() {
       depth_traversal(
+        root_,
         PRE,
         [this](iterator it, size_t depth) {
           std::cout << std::string(depth, '\t');
