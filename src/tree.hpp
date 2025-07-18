@@ -199,12 +199,13 @@ namespace SearchTrees {
     iterator find(KeyT key) & {
       return const_cast<iterator>(const_cast<const AVL_Tree*>(this)->find(key));
     }
-    const_iterator lower_bound(KeyT key) const & {
+
+    const_iterator lower_bound(KeyT key, const_iterator root) const & {
       if (empty())
         return end();
 
       const_iterator cur_min = end();
-      for (auto it = root_;;) {
+      for (auto it = root;;) {
         if (it->key_ < key) {
           if (!it->right_)
             return cur_min;
@@ -219,15 +220,21 @@ namespace SearchTrees {
         }
       }
     }
-    iterator lower_bound(KeyT key) & {
-      return const_cast<iterator>(const_cast<const AVL_Tree*>(this)->lower_bound(key));
+
+    const_iterator lower_bound(KeyT key) const & { return lower_bound(key, root_); }
+
+    iterator lower_bound(KeyT key, iterator root) & {
+      return const_cast<iterator>(const_cast<const AVL_Tree*>(this)->lower_bound(key, root));
     }
-    const_iterator upper_bound(KeyT key) const & {
+
+    iterator lower_bound(KeyT key) & { return lower_bound(key, root_);}
+
+    const_iterator upper_bound(KeyT key, const_iterator root) const & {
       if (empty())
         return end();
 
       const_iterator cur_min = end();
-      for (auto it = root_;;) {
+      for (auto it = root;;) {
         if (it->key_ < key || it->key_ == key) {
           if (!it->right_)
             return cur_min;
@@ -240,9 +247,14 @@ namespace SearchTrees {
         }
       }
     }
-    iterator upper_bound(KeyT key) & {
-      return const_cast<iterator>(const_cast<const AVL_Tree*>(this)->upper_bound(key));
+
+    const_iterator upper_bound(KeyT key) const & { return upper_bound(key, root_); }
+
+    iterator upper_bound(KeyT key, iterator root) & {
+      return const_cast<iterator>(const_cast<const AVL_Tree*>(this)->upper_bound(key, root));
     }
+
+    iterator upper_bound(KeyT key) & { return upper_bound(key, root_); }
 
     void print() {
       depth_traversal(
