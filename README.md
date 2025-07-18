@@ -7,10 +7,12 @@ Implementation of AVL tree without recursions and unpredictable iterator invalid
 ### Constructors
 ```
 (1)  AVL_Tree();
-(2)  AVL_Tree(AVL_Tree &&other);
+(2)  AVL_Tree(const AVL_Tree &other);
+(3)  AVL_Tree(AVL_Tree &&other);
 ```
 1\) Constructs empty tree.  
-2\) Move constructor. Constructs tree with the contents of `other` using move semantics.  
+2\) Copy constructor. Constructs tree with the copy of the contents of `other`.
+3\) Move constructor. Constructs tree with the contents of `other` using move semantics.  
 
 ### Destructor
 ```
@@ -19,9 +21,11 @@ Implementation of AVL tree without recursions and unpredictable iterator invalid
 
 ### Operator=
 ```
-(1)  AVL_Tree& operator= (AVL_Tree &&rhs);
+(1)  AVL_Tree& operator= (const AVL_Tree &rhs);
+(2)  AVL_Tree& operator= (AVL_Tree &&rhs);
 ```
-1\) Move assignment operator. Replaces the contents of `*this` with the contents of `other` using move semantics.  
+1\) Copy assignment operator. Replaces the contents with a copy of the contents of `*this`.
+2\) Move assignment operator. Replaces the contents of `*this` with the contents of `other` using move semantics.  
 
 ### Iterators
 ```
@@ -35,16 +39,18 @@ Implementation of AVL tree without recursions and unpredictable iterator invalid
 
 ### Modifiers
 ```
-(1)  iterator insert(KeyT key) &;
-(2)  bool erase(KeyT key) &;
+(1)  void clear();
+(2)  iterator insert(KeyT key) &;
+(3)  bool erase(KeyT key) &;
 ```
-1\) Attempts to insert element into `*this`.  
+1\) Erases all elements from the tree.
+2\) Attempts to insert element into `*this`.  
     If `*this` already contains an element with an equivalent key, does nothing.  
     Otherwise, inserts the element into `*this` and performs rebalancing according to the AVL balance factor.  
     No iterators are invalidated.  
     Returns iterator to the newly created element or to the already existing element with an equivalent key if no insertion was performed.  
 
-2\) Attempts to remove the element with an equivalent key from `*this`.  
+3\) Attempts to remove the element with an equivalent key from `*this`.  
     If `*this` doesn't contain an element with an equivalent key, does nothing.  
     Otherwise, removes the element from `*this` and performs rebalancing according to the AVL balance factor.  
     Iterator to the erased element is invalidated. Other iterators are not affected.  

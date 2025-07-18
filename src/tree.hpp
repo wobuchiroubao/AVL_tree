@@ -58,20 +58,43 @@ namespace SearchTrees {
       }
     }
 
+    iterator copy_depth_traversal(iterator root) {
+      if (!root)
+        return nullptr;
+      iterator copy_root = new AVL_Node<KeyT>{root->key_, nullptr, root->height_};
+
+      for (auto it = root, copy_it = copy_root;;) {
+        if (it->left_ && !copy_it->left_) {
+          it = it->left_;
+          copy_it = new AVL_Node<KeyT>{it->key_, copy_it, it->height_};
+          copy_it->parent_->left_ = copy_it;
+        } else if (it->right_ && !copy_it->right_) {
+          it = it->right_;
+          copy_it = new AVL_Node<KeyT>{it->key_, copy_it, it->height_};
+          copy_it->parent_->right_ = copy_it;
+        } else if (it != root) {
+          it = it->parent_;
+          copy_it = copy_it->parent_;
+        } else {
+          break;
+        }
+      }
+      return copy_root;
+    }
+
   public: // ctors & dtors
     AVL_Tree() {}
-    AVL_Tree(const AVL_Tree &other) = delete;
+    AVL_Tree(const AVL_Tree &other) : root_(copy_depth_traversal(other.root_)) {}
     AVL_Tree(AVL_Tree &&other) : root_(other.root_) { other.root_ = nullptr; }
-    ~AVL_Tree() {
-      depth_traversal(
-        root_,
-        POST,
-        [](iterator it, size_t _) {
-          delete it;
-        }
-      );
+    ~AVL_Tree() { clear(); }
+    AVL_Tree& operator= (const AVL_Tree &rhs) {
+      if (this == &rhs)
+        return *this;
+
+      clear();
+      root_ = copy_depth_traversal(rhs.root_);
+      return *this;
     }
-    AVL_Tree& operator= (const AVL_Tree &rhs) = delete;
     AVL_Tree& operator= (AVL_Tree &&rhs) {
       if (this == &rhs)
         return *this;
@@ -280,6 +303,17 @@ namespace SearchTrees {
     }
 
   public: // modifiers
+    void clear() {
+      depth_traversal(
+        root_,
+        POST,
+        [](iterator it, size_t _) {
+          delete it;
+        }
+      );
+      root_ = end();
+    }
+
     iterator insert(KeyT key) & {
       if (!root_) {
         root_ = new AVL_Node<KeyT>{key};

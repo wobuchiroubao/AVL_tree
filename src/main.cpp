@@ -16,29 +16,25 @@ int main() {
   avl.insert(16);
   avl.insert(14);
   avl.insert(10);
+
+  std::cout << "Tree after insertions:" << std::endl;
   avl.print();
 
+  AVL_Tree<int> avl_copy{avl};
+
   avl.erase(12);
-  std::cout << "State after erase(12):" << std::endl;
-  avl.print();
   avl.erase(3);
-  std::cout << "State after erase(3):" << std::endl;
-  avl.print();
   avl.erase(6);
-  std::cout << "State after erase(6):" << std::endl;
-  avl.print();
   avl.erase(4);
-  std::cout << "State after erase(4):" << std::endl;
-  avl.print();
   avl.erase(8);
-  std::cout << "State after erase(8):" << std::endl;
-  avl.print();
   avl.erase(11);
-  std::cout << "State after erase(11):" << std::endl;
-  avl.print();
   avl.erase(13);
-  std::cout << "State after erase(13):" << std::endl;
+
+  std::cout << "Tree after erases:" << std::endl;
   avl.print();
+
+  std::cout << "Copy of tree before erases:" << std::endl;
+  avl_copy.print();
 
   return 0;
 }
