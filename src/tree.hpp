@@ -315,29 +315,35 @@ namespace SearchTrees {
       if (node == end())
         return false;
 
-      if (node->left_ && node->right_) {
-        for (auto it = node->left_;; it = it->right_) {
-          if (!it->right_) {
-            it->right_ = node->right_;
-            node->right_->parent_ = it;
-            break;
+      iterator successor = node->left_ ? node->left_ : node->right_;
+      if (node->left_ && node->right_) { // 2 children
+        successor = upper_bound(node->key_, node->right_);
+        assert(!successor->left_);
+        successor->left_ = node->left_;
+        node->left_->parent_ = successor;
+
+        if (successor->parent_ != node) {
+          assert(successor->parent_->left_ == successor);
+          successor->parent_->left_ = successor->right_;
+          if (successor->right_) {
+            successor->right_->parent_ = successor->parent_;
           }
+          successor->right_ = node->right_;
+          node->right_->parent_ = successor;
         }
       }
-      iterator new_node = node->left_ ? node->left_ : node->right_;
-      if (new_node) {
-        new_node->parent_ = node->parent_;
-      }
-      if (node->parent_) {
-        assert(node->parent_->left_ == node || node->parent_->right_ == node);
-        if (node->parent_->left_ == node) {
-          node->parent_->left_ = new_node;
-        } else {
-          node->parent_->right_ = new_node;
-        }
-      } else {
+
+      assert(!node->parent_ || node->parent_->left_ == node || node->parent_->right_ == node);
+      if (!node->parent_) {
         assert(root_ == node);
-        root_ = new_node;
+        root_ = successor;
+      } else if (node->parent_->left_ == node) {
+        node->parent_->left_ = successor;
+      } else {
+        node->parent_->right_ = successor;
+      }
+      if (successor) {
+        successor->parent_ = node->parent_;
       }
       delete node;
       return true;
