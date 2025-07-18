@@ -158,7 +158,8 @@ namespace SearchTrees {
       return new_child;
     }
 
-    void retrace(iterator start) {
+    template <typename Func>
+    void retrace(iterator start, Func break_cond) {
       for (auto node = start; node != nullptr; node = node->parent_) {
         node->height_ = calc_height(node);
         int bf = calc_balance_factor(node);
@@ -168,21 +169,21 @@ namespace SearchTrees {
           assert(child);
           int ch_bf = calc_balance_factor(child);
 
-          if (bf == -2) { // left heavy
-            if (ch_bf == 1) { // ch right heavy
-              rotate_left_right(node, child);
-            } else { // ch left heavy
+          if (break_cond(bf)) {
+            break;
+          } else if (bf == -2) { // left heavy
+            if (ch_bf <= 0) { // ch left heavy or balanced
               rotate_right(node, child);
+            } else { // ch right heavy
+              rotate_left_right(node, child);
             }
           } else if (bf == 2) { // right heavy
-            if (ch_bf == 1) { // ch right heavy
+            if (ch_bf >= 0) { // ch right heavy or balanced
               rotate_left(node, child);
             } else { // ch left heavy
               rotate_right_left(node, child);
             }
           }
-        } else if (bf == 0) {
-          break;
         }
       }
     }
@@ -310,7 +311,10 @@ namespace SearchTrees {
           }
         }
       }
-      retrace(new_node->parent_);
+      retrace(
+        new_node->parent_,
+        [](int bf) { return (bf == 0); }
+      );
 
       return new_node;
     }
@@ -327,6 +331,7 @@ namespace SearchTrees {
         successor->left_ = node->left_;
         node->left_->parent_ = successor;
 
+        // place successor in root of (node->right_) subtree
         if (successor->parent_ != node) {
           assert(successor->parent_->left_ == successor);
           successor->parent_->left_ = successor->right_;
@@ -338,6 +343,19 @@ namespace SearchTrees {
         }
       }
 
+      // calc retrace start point
+      iterator retrase_start = nullptr;
+      if (!node->left_ || !node->right_) { // no children or 1 child
+        retrase_start = node->parent_;
+      } else { // 2 children
+        if (successor->parent_ == node) {
+          retrase_start = successor;
+        } else {
+          retrase_start = successor->parent_;
+        }
+      }
+
+      // move successor on node's place
       assert(!node->parent_ || node->parent_->left_ == node || node->parent_->right_ == node);
       if (!node->parent_) {
         assert(root_ == node);
@@ -350,7 +368,13 @@ namespace SearchTrees {
       if (successor) {
         successor->parent_ = node->parent_;
       }
+
       delete node;
+      retrace(
+        retrase_start,
+        [](int bf) { return (std::abs(bf) == 1); }
+      );
+
       return true;
     }
   };
