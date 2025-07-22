@@ -285,19 +285,19 @@ namespace SearchTrees {
 
     iterator upper_bound(KeyT key) & { return upper_bound(key, root_); }
 
-    void print() {
+    void dump(std::ostream& os) {
       depth_traversal(
         root_,
         PRE,
-        [this](iterator it, size_t depth) {
-          std::cout << std::string(depth, '\t');
+        [this, &os](iterator it, size_t depth) {
+          os << std::string(depth, '\t');
           if (it->parent_) {
             if (it->parent_->left_ == it)
-              std::cout << "L: ";
+              os << "L: ";
             else
-              std::cout << "R: ";
+              os << "R: ";
           }
-          std::cout << "(" << it->key_ << "; " << it->height_ << "; " << calc_balance_factor(it) << ")" << std::endl;
+          os << "(" << it->key_ << "; " << it->height_ << "; " << calc_balance_factor(it) << ")\n";
         }
       );
     }
@@ -413,4 +413,10 @@ namespace SearchTrees {
     }
   };
 
-}
+  template <typename KeyT>
+  std::ostream& operator<<(std::ostream& os, AVL_Tree<KeyT>& tree) {
+    tree.dump(os);
+    return os;
+  }
+
+} // SearchTrees
