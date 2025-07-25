@@ -21,38 +21,38 @@ class AVL_Tree {
   iterator root_ = nullptr;
 
 private: // traversal
-  enum visited_children_t { NONE, LEFT, RIGHT };
-  enum order_t { PRE, POST };
+  enum class visited_child_t : char { NONE, LEFT, RIGHT };
+  enum class order_t : char { PRE, POST };
 
   template <typename Func>
   void depth_traversal(iterator root, order_t order, Func func) {
-    visited_children_t visited = NONE;
+    visited_child_t visited = visited_child_t::NONE;
     size_t depth = 0;
 
     for (auto it = root; it != nullptr;) {
-      if (order == PRE && visited == NONE)
+      if (order == order_t::PRE && visited == visited_child_t::NONE)
         func(it, depth);
-      if (it->left_ && visited == NONE) {
+      if (it->left_ && visited == visited_child_t::NONE) {
         it = it->left_;
         ++depth;
-      } else if (it->right_ && visited != RIGHT) {
+      } else if (it->right_ && visited != visited_child_t::RIGHT) {
         it = it->right_;
-        visited = NONE;
+        visited = visited_child_t::NONE;
         ++depth;
       } else {
         iterator parent = it != root ? it->parent_ : nullptr;
         if (parent) {
           assert(parent->left_ == it || parent->right_ == it);
           if (parent->left_ == it) {
-            visited = LEFT;
+            visited = visited_child_t::LEFT;
           } else {
-            visited = RIGHT;
+            visited = visited_child_t::RIGHT;
           }
           --depth;
         }
         iterator tmp = it;
         it = parent;
-        if (order == POST)
+        if (order == order_t::POST)
           func(tmp, depth);
       }
     }
@@ -288,7 +288,7 @@ public: // selectors
   void dump(std::ostream& os) {
     depth_traversal(
       root_,
-      PRE,
+      order_t::PRE,
       [this, &os](iterator it, size_t depth) {
         os << std::string(depth, '\t');
         if (it->parent_) {
@@ -306,7 +306,7 @@ public: // modifiers
   void clear() {
     depth_traversal(
       root_,
-      POST,
+      order_t::POST,
       [](iterator it, size_t _) {
         delete it;
       }
