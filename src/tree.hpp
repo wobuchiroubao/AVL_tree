@@ -44,17 +44,17 @@ struct AVL_Node final : public BST_Node<KeyT> {
 
 template <typename KeyT>
 class BST_Tree {
-  using iterator = BST_Node<KeyT> *;
-  using const_iterator = const BST_Node<KeyT> *;
+  using bst_iterator = BST_Node<KeyT> *;
+  using bst_const_iterator = const BST_Node<KeyT> *;
 protected:
-  iterator root_ = nullptr;
+  bst_iterator root_ = nullptr;
 
 protected: // traversal
   enum class visited_child_t : char { NONE, LEFT, RIGHT };
   enum class order_t : char { PRE, POST };
 
   template <typename Func>
-  void depth_traversal(iterator root, order_t order, Func func) {
+  void depth_traversal(bst_iterator root, order_t order, Func func) {
     visited_child_t visited = visited_child_t::NONE;
     size_t depth = 0;
 
@@ -69,7 +69,7 @@ protected: // traversal
         visited = visited_child_t::NONE;
         ++depth;
       } else {
-        iterator parent = it != root ? it->parent_ : nullptr;
+        bst_iterator parent = it != root ? it->parent_ : nullptr;
         if (parent) {
           assert(parent->left_ == it || parent->right_ == it);
           if (parent->left_ == it) {
@@ -79,7 +79,7 @@ protected: // traversal
           }
           --depth;
         }
-        iterator tmp = it;
+        bst_iterator tmp = it;
         it = parent;
         if (order == order_t::POST)
           func(tmp, depth);
@@ -87,21 +87,21 @@ protected: // traversal
     }
   }
 
-  iterator copy_depth_traversal(iterator root) {
+  bst_iterator copy_depth_traversal(bst_iterator root) {
     if (!root)
       return nullptr;
-    iterator copy_root = root->clone();
+    bst_iterator copy_root = root->clone();
 
     for (auto it = root, copy_it = copy_root;;) {
       if (it->left_ && !copy_it->left_) {
         it = it->left_;
-        iterator parent = copy_it;
+        bst_iterator parent = copy_it;
         copy_it = it->clone();
         copy_it->parent_ = parent;
         copy_it->parent_->left_ = copy_it;
       } else if (it->right_ && !copy_it->right_) {
         it = it->right_;
-        iterator parent = copy_it;
+        bst_iterator parent = copy_it;
         copy_it = it->clone();
         copy_it->parent_ = parent;
         copy_it->parent_->right_ = copy_it;
@@ -121,7 +121,7 @@ public: // ctors & dtors
     depth_traversal(
       root_,
       order_t::POST,
-      [](iterator it, size_t _) {
+      [](bst_iterator it, size_t _) {
         delete it;
       }
     );
@@ -145,28 +145,28 @@ public: // ctors & dtors
   }
 
 public: // selectors
-  virtual const_iterator root() const & { return root_; }
-  virtual iterator root() & { return root_; }
-  virtual const_iterator end() const & { return nullptr; }
-  virtual iterator end() & { return nullptr; }
+  virtual bst_const_iterator root() const & { return root_; }
+  virtual bst_iterator root() & { return root_; }
+  virtual bst_const_iterator end() const & { return nullptr; }
+  virtual bst_iterator end() & { return nullptr; }
   bool empty() const { return !root_; }
   bool contains(KeyT key) const {
-    iterator node = find(key);
+    bst_iterator node = find(key);
     return node != end();
   }
-  virtual const_iterator find(KeyT key) const & {
-    const_iterator lb = lower_bound(key);
+  virtual bst_const_iterator find(KeyT key) const & {
+    bst_const_iterator lb = lower_bound(key);
     return (lb && lb->key_ == key) ? lb : end();
   }
-  virtual iterator find(KeyT key) & {
-    return const_cast<iterator>(const_cast<const BST_Tree*>(this)->find(key));
+  virtual bst_iterator find(KeyT key) & {
+    return const_cast<bst_iterator>(const_cast<const BST_Tree*>(this)->find(key));
   }
 
-  virtual const_iterator lower_bound(KeyT key, const_iterator root) const & {
+  virtual bst_const_iterator lower_bound(KeyT key, bst_const_iterator root) const & {
     if (empty())
       return end();
 
-    const_iterator cur_min = end();
+    bst_const_iterator cur_min = end();
     for (auto it = root;;) {
       if (it->key_ < key) {
         if (!it->right_)
@@ -183,19 +183,19 @@ public: // selectors
     }
   }
 
-  virtual const_iterator lower_bound(KeyT key) const & { return lower_bound(key, root_); }
+  virtual bst_const_iterator lower_bound(KeyT key) const & { return lower_bound(key, root_); }
 
-  virtual iterator lower_bound(KeyT key, iterator root) & {
-    return const_cast<iterator>(const_cast<const BST_Tree*>(this)->lower_bound(key, root));
+  virtual bst_iterator lower_bound(KeyT key, bst_iterator root) & {
+    return const_cast<bst_iterator>(const_cast<const BST_Tree*>(this)->lower_bound(key, root));
   }
 
-  virtual iterator lower_bound(KeyT key) & { return lower_bound(key, root_);}
+  virtual bst_iterator lower_bound(KeyT key) & { return lower_bound(key, root_);}
 
-  virtual const_iterator upper_bound(KeyT key, const_iterator root) const & {
+  virtual bst_const_iterator upper_bound(KeyT key, bst_const_iterator root) const & {
     if (empty())
       return end();
 
-    const_iterator cur_min = end();
+    bst_const_iterator cur_min = end();
     for (auto it = root;;) {
       if (it->key_ < key || it->key_ == key) {
         if (!it->right_)
@@ -210,19 +210,19 @@ public: // selectors
     }
   }
 
-  virtual const_iterator upper_bound(KeyT key) const & { return upper_bound(key, root_); }
+  virtual bst_const_iterator upper_bound(KeyT key) const & { return upper_bound(key, root_); }
 
-  virtual iterator upper_bound(KeyT key, iterator root) & {
-    return const_cast<iterator>(const_cast<const BST_Tree*>(this)->upper_bound(key, root));
+  virtual bst_iterator upper_bound(KeyT key, bst_iterator root) & {
+    return const_cast<bst_iterator>(const_cast<const BST_Tree*>(this)->upper_bound(key, root));
   }
 
-  virtual iterator upper_bound(KeyT key) & { return upper_bound(key, root_); }
+  virtual bst_iterator upper_bound(KeyT key) & { return upper_bound(key, root_); }
 
   virtual void dump(std::ostream& os) {
     depth_traversal(
       root_,
       order_t::PRE,
-      [this, &os](iterator it, size_t depth) {
+      [this, &os](bst_iterator it, size_t depth) {
         os << std::string(depth, '\t');
         if (it->parent_) {
           if (it->parent_->left_ == it)
@@ -240,28 +240,28 @@ public: // modifiers
     depth_traversal(
       root_,
       order_t::POST,
-      [](iterator it, size_t _) {
+      [](bst_iterator it, size_t _) {
         delete it;
       }
     );
     root_ = end();
   }
 
-  virtual iterator create_node(KeyT key) const {
+  virtual bst_iterator create_node(KeyT key) const {
     return new BST_Node<KeyT>{key};
   }
 
-  virtual iterator insert(KeyT key) & {
+  virtual bst_iterator insert(KeyT key) & {
     if (!root_) {
       root_ = create_node(key);
       return root_;
     }
 
-    iterator lb = lower_bound(key);
+    bst_iterator lb = lower_bound(key);
     if (lb && lb->key_ == key)
       return lb;
 
-    iterator new_node = create_node(key);
+    bst_iterator new_node = create_node(key);
     if (!lb) {
       for (auto it = root_;; it = it->right_) {
         if (!it->right_) {
@@ -287,11 +287,11 @@ public: // modifiers
   }
 
   virtual bool erase(KeyT key) & {
-    iterator node = find(key);
+    bst_iterator node = find(key);
     if (node == end())
       return false;
 
-    iterator successor = node->left_ ? node->left_ : node->right_;
+    bst_iterator successor = node->left_ ? node->left_ : node->right_;
     if (node->left_ && node->right_) { // 2 children
       successor = upper_bound(node->key_, node->right_);
       assert(!successor->left_);
@@ -337,12 +337,13 @@ std::ostream& operator<< (std::ostream& os, BST_Tree<KeyT>& tree) {
   return os;
 }
 
+
 template <typename KeyT>
 class AVL_Tree final : public BST_Tree<KeyT> {
-  using base_iterator = BST_Node<KeyT> *;
-  using base_const_iterator = const BST_Node<KeyT> *;
-  using iterator = AVL_Node<KeyT> *;
-  using const_iterator = const AVL_Node<KeyT> *;
+  using bst_iterator = BST_Node<KeyT> *;
+  using bst_const_iterator = const BST_Node<KeyT> *;
+  using avl_iterator = AVL_Node<KeyT> *;
+  using avl_const_iterator = const AVL_Node<KeyT> *;
 
 public: // ctors & dtors
   AVL_Tree() : BST_Tree<KeyT>{} {}
@@ -350,20 +351,20 @@ public: // ctors & dtors
   AVL_Tree(AVL_Tree &&other) : BST_Tree<KeyT>{std::move(other)} {}
 
 private: // rotations
-  int calc_height(iterator node) const {
+  int calc_height(avl_iterator node) const {
     return std::max(
-      (node->left_ ? static_cast<iterator>(node->left_)->height_ : 0),
-      (node->right_ ? static_cast<iterator>(node->right_)->height_ : 0)
+      (node->left_ ? static_cast<avl_iterator>(node->left_)->height_ : 0),
+      (node->right_ ? static_cast<avl_iterator>(node->right_)->height_ : 0)
     ) + 1;
   }
-  int calc_balance_factor(iterator node) const {
+  int calc_balance_factor(avl_iterator node) const {
     return (
-      (node->right_ ? static_cast<iterator>(node->right_)->height_ : 0)
-      - (node->left_ ? static_cast<iterator>(node->left_)->height_ : 0));
+      (node->right_ ? static_cast<avl_iterator>(node->right_)->height_ : 0)
+      - (node->left_ ? static_cast<avl_iterator>(node->left_)->height_ : 0));
   }
 
-  void simple_rotate_swap_parent(base_iterator sub_root, base_iterator child) {
-    base_iterator &sub_root_parent = sub_root->parent_;
+  void simple_rotate_swap_parent(bst_iterator sub_root, bst_iterator child) {
+    bst_iterator &sub_root_parent = sub_root->parent_;
     if (sub_root_parent) {
       assert(sub_root_parent->left_ == sub_root || sub_root_parent->right_ == sub_root);
       if (sub_root_parent->left_ == sub_root) {
@@ -379,7 +380,7 @@ private: // rotations
     }
   }
 
-  iterator rotate_left(iterator sub_root, iterator right_child) & {
+  avl_iterator rotate_left(avl_iterator sub_root, avl_iterator right_child) & {
     assert(sub_root->right_ == right_child && right_child->parent_ == sub_root);
 
     simple_rotate_swap_parent(sub_root, right_child);
@@ -396,7 +397,7 @@ private: // rotations
     return right_child;
   }
 
-  iterator rotate_right(iterator sub_root, iterator left_child) & {
+  avl_iterator rotate_right(avl_iterator sub_root, avl_iterator left_child) & {
     assert(sub_root->left_ == left_child && left_child->parent_ == sub_root);
 
     simple_rotate_swap_parent(sub_root, left_child);
@@ -413,32 +414,32 @@ private: // rotations
     return left_child;
   }
 
-  iterator rotate_left_right(iterator sub_root, iterator left_child) & {
+  avl_iterator rotate_left_right(avl_iterator sub_root, avl_iterator left_child) & {
     assert(left_child->right_);
-    iterator new_child = rotate_left(left_child, static_cast<iterator>(left_child->right_));
+    avl_iterator new_child = rotate_left(left_child, static_cast<avl_iterator>(left_child->right_));
     rotate_right(sub_root, new_child);
     return new_child;
   }
 
-  iterator rotate_right_left(iterator sub_root, iterator right_child) & {
+  avl_iterator rotate_right_left(avl_iterator sub_root, avl_iterator right_child) & {
     assert(right_child->left_);
-    iterator new_child = rotate_right(right_child, static_cast<iterator>(right_child->left_));
+    avl_iterator new_child = rotate_right(right_child, static_cast<avl_iterator>(right_child->left_));
     rotate_left(sub_root, new_child);
     return new_child;
   }
 
   template <typename Func>
-  void retrace(base_iterator start, Func break_cond) {
+  void retrace(bst_iterator start, Func break_cond) {
     for (
-      auto node = static_cast<iterator>(start);
+      auto node = static_cast<avl_iterator>(start);
       node != nullptr;
-      node = static_cast<iterator>(node->parent_)
+      node = static_cast<avl_iterator>(node->parent_)
     ) {
       node->height_ = calc_height(node);
       int bf = calc_balance_factor(node);
 
       if (std::abs(bf) == 2) {
-        iterator child = static_cast<iterator>((bf < 0) ? node->left_ : node->right_);
+        avl_iterator child = static_cast<avl_iterator>((bf < 0) ? node->left_ : node->right_);
         assert(child);
         int ch_bf = calc_balance_factor(child);
 
@@ -462,46 +463,46 @@ private: // rotations
   }
 
 public: // selectors
-  const_iterator root() const & override { return static_cast<iterator>(this->root_); }
-  iterator root() & override { return static_cast<iterator>(this->root_); }
-  const_iterator end() const & override { return nullptr; }
-  iterator end() & override { return nullptr; }
-  const_iterator find(KeyT key) const & override {
-    return static_cast<const_iterator>(BST_Tree<KeyT>::find(key));
+  avl_const_iterator root() const & override { return static_cast<avl_iterator>(this->root_); }
+  avl_iterator root() & override { return static_cast<avl_iterator>(this->root_); }
+  avl_const_iterator end() const & override { return nullptr; }
+  avl_iterator end() & override { return nullptr; }
+  avl_const_iterator find(KeyT key) const & override {
+    return static_cast<avl_const_iterator>(BST_Tree<KeyT>::find(key));
   }
-  iterator find(KeyT key) & override {
-    return const_cast<iterator>(const_cast<const AVL_Tree*>(this)->find(key));
-  }
-
-  const_iterator lower_bound(KeyT key, base_const_iterator root) const & override {
-      return static_cast<const_iterator>(BST_Tree<KeyT>::lower_bound(key, root));
+  avl_iterator find(KeyT key) & override {
+    return const_cast<avl_iterator>(const_cast<const AVL_Tree*>(this)->find(key));
   }
 
-  const_iterator lower_bound(KeyT key) const & override { return lower_bound(key, this->root_); }
-
-  iterator lower_bound(KeyT key, base_iterator root) & override {
-    return const_cast<iterator>(const_cast<const AVL_Tree*>(this)->lower_bound(key, root));
+  avl_const_iterator lower_bound(KeyT key, bst_const_iterator root) const & override {
+      return static_cast<avl_const_iterator>(BST_Tree<KeyT>::lower_bound(key, root));
   }
 
-  iterator lower_bound(KeyT key) & override { return lower_bound(key, this->root_);}
+  avl_const_iterator lower_bound(KeyT key) const & override { return lower_bound(key, this->root_); }
 
-  const_iterator upper_bound(KeyT key, base_const_iterator root) const & override {
-    return static_cast<const_iterator>(BST_Tree<KeyT>::upper_bound(key, root));
+  avl_iterator lower_bound(KeyT key, bst_iterator root) & override {
+    return const_cast<avl_iterator>(const_cast<const AVL_Tree*>(this)->lower_bound(key, root));
   }
 
-  const_iterator upper_bound(KeyT key) const & override { return upper_bound(key, this->root_); }
+  avl_iterator lower_bound(KeyT key) & override { return lower_bound(key, this->root_);}
 
-  iterator upper_bound(KeyT key, base_iterator root) & override {
-    return const_cast<iterator>(const_cast<const AVL_Tree*>(this)->upper_bound(key, root));
+  avl_const_iterator upper_bound(KeyT key, bst_const_iterator root) const & override {
+    return static_cast<avl_const_iterator>(BST_Tree<KeyT>::upper_bound(key, root));
   }
 
-  iterator upper_bound(KeyT key) & override { return upper_bound(key, this->root_); }
+  avl_const_iterator upper_bound(KeyT key) const & override { return upper_bound(key, this->root_); }
+
+  avl_iterator upper_bound(KeyT key, bst_iterator root) & override {
+    return const_cast<avl_iterator>(const_cast<const AVL_Tree*>(this)->upper_bound(key, root));
+  }
+
+  avl_iterator upper_bound(KeyT key) & override { return upper_bound(key, this->root_); }
 
   void dump(std::ostream& os) override {
     this->depth_traversal(
       this->root_,
       BST_Tree<KeyT>::order_t::PRE,
-      [this, &os](base_iterator it, size_t depth) {
+      [this, &os](bst_iterator it, size_t depth) {
         os << std::string(depth, '\t');
         if (it->parent_) {
           if (it->parent_->left_ == it)
@@ -509,20 +510,20 @@ public: // selectors
           else
           os << "R: ";
         }
-        auto avl_it = static_cast<iterator>(it);
+        auto avl_it = static_cast<avl_iterator>(it);
         os << "(" << avl_it->key_ << "; " << avl_it->height_ << "; " << calc_balance_factor(avl_it) << ")\n";
       }
     );
   }
 
-  iterator create_node(KeyT key) const override {
+  avl_iterator create_node(KeyT key) const override {
     return new AVL_Node<KeyT>{key};
   }
 
-  iterator insert(KeyT key) & override {
-    iterator new_node = static_cast<iterator>(BST_Tree<KeyT>::insert(key));
+  avl_iterator insert(KeyT key) & override {
+    avl_iterator new_node = static_cast<avl_iterator>(BST_Tree<KeyT>::insert(key));
     retrace(
-      static_cast<iterator>(new_node->parent_),
+      static_cast<avl_iterator>(new_node->parent_),
       [](int bf) { return (bf == 0); }
     );
 
@@ -530,11 +531,11 @@ public: // selectors
   }
 
   bool erase(KeyT key) & override {
-    base_iterator node = find(key);
+    bst_iterator node = find(key);
     if (node == end())
       return false;
 
-    base_iterator successor = node->left_ ? node->left_ : node->right_;
+    bst_iterator successor = node->left_ ? node->left_ : node->right_;
     if (node->left_ && node->right_) { // 2 children
       successor = upper_bound(node->key_, node->right_);
       assert(!successor->left_);
@@ -554,7 +555,7 @@ public: // selectors
     }
 
     // calc retrace start point
-    base_iterator retrase_start = nullptr;
+    bst_iterator retrase_start = nullptr;
     if (!node->left_ || !node->right_) { // no children or 1 child
       retrase_start = node->parent_;
     } else { // 2 children
@@ -581,7 +582,7 @@ public: // selectors
 
     delete node;
     retrace(
-      static_cast<iterator>(retrase_start),
+      static_cast<avl_iterator>(retrase_start),
       [](int bf) { return (std::abs(bf) == 1); }
     );
 
