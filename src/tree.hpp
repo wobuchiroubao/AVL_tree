@@ -115,25 +115,30 @@ protected: // traversal
       return nullptr;
     bst_iterator copy_root = root->clone();
 
-    for (auto it = root, copy_it = copy_root;;) {
-      if (it->left_ && !copy_it->left_) {
-        it = it->left_;
-        bst_iterator parent = copy_it;
-        copy_it = it->clone();
-        copy_it->parent_ = parent;
-        copy_it->parent_->left_ = copy_it;
-      } else if (it->right_ && !copy_it->right_) {
-        it = it->right_;
-        bst_iterator parent = copy_it;
-        copy_it = it->clone();
-        copy_it->parent_ = parent;
-        copy_it->parent_->right_ = copy_it;
-      } else if (it != root) {
-        it = it->parent_;
-        copy_it = copy_it->parent_;
-      } else {
-        break;
+    try {
+      for (auto it = root, copy_it = copy_root;;) {
+        if (it->left_ && !copy_it->left_) {
+          it = it->left_;
+          bst_iterator parent = copy_it;
+          copy_it = it->clone();
+          copy_it->parent_ = parent;
+          copy_it->parent_->left_ = copy_it;
+        } else if (it->right_ && !copy_it->right_) {
+          it = it->right_;
+          bst_iterator parent = copy_it;
+          copy_it = it->clone();
+          copy_it->parent_ = parent;
+          copy_it->parent_->right_ = copy_it;
+        } else if (it != root) {
+          it = it->parent_;
+          copy_it = copy_it->parent_;
+        } else {
+          break;
+        }
       }
+    } catch (...) { // catch exceptions thrown by clone()
+      clear(copy_root);
+      throw;
     }
     return copy_root;
   }
@@ -149,8 +154,8 @@ public: // ctors & dtors
     if (this == &rhs)
       return *this;
 
-    clear();
-    root_ = copy_depth_traversal(rhs.root_);
+    BST_Tree tmp(rhs);
+    std::swap(root_, tmp.root_);
     return *this;
   }
   BST_Tree& operator= (BST_Tree &&rhs) noexcept {
@@ -363,8 +368,8 @@ public: // ctors & dtors
     if (this == &rhs)
       return *this;
 
-    this->clear();
-    this->root_ = this->copy_depth_traversal(rhs.root_);
+    AVL_Tree tmp(rhs);
+    std::swap(this->root_, tmp.root_);
     return *this;
   }
   AVL_Tree& operator= (AVL_Tree &&rhs) noexcept {
