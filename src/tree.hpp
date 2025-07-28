@@ -116,7 +116,7 @@ protected: // traversal
   }
 
 public: // ctors & dtors
-  BST_Tree() {}
+  BST_Tree() noexcept {}
   virtual ~BST_Tree() {
     depth_traversal(
       root_,
@@ -127,7 +127,7 @@ public: // ctors & dtors
     );
   }
   BST_Tree(const BST_Tree &other) : root_(copy_depth_traversal(other.root_)) {}
-  BST_Tree(BST_Tree &&other) : root_(other.root_) { other.root_ = nullptr; }
+  BST_Tree(BST_Tree &&other) noexcept : root_(other.root_) { other.root_ = nullptr; }
   virtual BST_Tree& operator= (const BST_Tree &rhs) {
     if (this == &rhs)
       return *this;
@@ -136,7 +136,7 @@ public: // ctors & dtors
     root_ = copy_depth_traversal(rhs.root_);
     return *this;
   }
-  virtual BST_Tree& operator= (BST_Tree &&rhs) {
+  virtual BST_Tree& operator= (BST_Tree &&rhs) noexcept {
     if (this == &rhs)
       return *this;
 
@@ -147,9 +147,9 @@ public: // ctors & dtors
 public: // selectors
   virtual bst_const_iterator root() const & { return root_; }
   virtual bst_iterator root() & { return root_; }
-  virtual bst_const_iterator end() const & { return nullptr; }
-  virtual bst_iterator end() & { return nullptr; }
-  bool empty() const { return !root_; }
+  virtual bst_const_iterator end() const & noexcept { return nullptr; }
+  virtual bst_iterator end() & noexcept { return nullptr; }
+  bool empty() const noexcept { return !root_; }
   bool contains(KeyT key) const {
     bst_iterator node = find(key);
     return node != end();
@@ -346,9 +346,9 @@ class AVL_Tree final : public BST_Tree<KeyT> {
   using avl_const_iterator = const AVL_Node<KeyT> *;
 
 public: // ctors & dtors
-  AVL_Tree() : BST_Tree<KeyT>{} {}
+  AVL_Tree() noexcept : BST_Tree<KeyT>{} {}
   AVL_Tree(const AVL_Tree &other) : BST_Tree<KeyT>{other} {}
-  AVL_Tree(AVL_Tree &&other) : BST_Tree<KeyT>{std::move(other)} {}
+  AVL_Tree(AVL_Tree &&other) noexcept : BST_Tree<KeyT>{std::move(other)} {}
 
 private: // rotations
   int calc_height(avl_iterator node) const {
@@ -465,8 +465,8 @@ private: // rotations
 public: // selectors
   avl_const_iterator root() const & override { return static_cast<avl_iterator>(this->root_); }
   avl_iterator root() & override { return static_cast<avl_iterator>(this->root_); }
-  avl_const_iterator end() const & override { return nullptr; }
-  avl_iterator end() & override { return nullptr; }
+  avl_const_iterator end() const & noexcept override { return nullptr; }
+  avl_iterator end() & noexcept override { return nullptr; }
   avl_const_iterator find(KeyT key) const & override {
     return static_cast<avl_const_iterator>(BST_Tree<KeyT>::find(key));
   }
