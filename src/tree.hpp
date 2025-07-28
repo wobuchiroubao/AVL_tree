@@ -10,7 +10,8 @@ struct BST_Node {
   KeyT key_;
   BST_Node *parent_ = nullptr, *left_ = nullptr, *right_ = nullptr;
 
-  explicit BST_Node(const KeyT &key, BST_Node *parent = nullptr)
+  explicit BST_Node(const KeyT &key, BST_Node *parent = nullptr) noexcept(
+std::is_nothrow_copy_constructible<KeyT>::value)
     : key_(key)
     , parent_(parent) {}
   virtual ~BST_Node() = default;
@@ -28,7 +29,8 @@ template <typename KeyT>
 struct AVL_Node final : public BST_Node<KeyT> {
   int height_ = 1;
 
-  explicit AVL_Node(const KeyT &key, AVL_Node *parent = nullptr, int height = 1)
+  explicit AVL_Node(const KeyT &key, AVL_Node *parent = nullptr, int height = 1) noexcept(
+std::is_nothrow_copy_constructible<KeyT>::value)
     : BST_Node<KeyT>{key, parent}
     , height_(height) {}
   AVL_Node(const AVL_Node &other) = delete;
