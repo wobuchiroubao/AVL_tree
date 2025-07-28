@@ -145,7 +145,7 @@ public: // ctors & dtors
   }
   BST_Tree(const BST_Tree &other) : root_(copy_depth_traversal(other.root_)) {}
   BST_Tree(BST_Tree &&other) noexcept : root_(other.root_) { other.root_ = nullptr; }
-  virtual BST_Tree& operator= (const BST_Tree &rhs) {
+  BST_Tree& operator= (const BST_Tree &rhs) {
     if (this == &rhs)
       return *this;
 
@@ -153,7 +153,7 @@ public: // ctors & dtors
     root_ = copy_depth_traversal(rhs.root_);
     return *this;
   }
-  virtual BST_Tree& operator= (BST_Tree &&rhs) noexcept {
+  BST_Tree& operator= (BST_Tree &&rhs) noexcept {
     if (this == &rhs)
       return *this;
 
@@ -359,6 +359,21 @@ public: // ctors & dtors
   AVL_Tree() noexcept : BST_Tree<KeyT>{} {}
   AVL_Tree(const AVL_Tree &other) : BST_Tree<KeyT>{other} {}
   AVL_Tree(AVL_Tree &&other) noexcept : BST_Tree<KeyT>{std::move(other)} {}
+  AVL_Tree& operator= (const AVL_Tree &rhs) {
+    if (this == &rhs)
+      return *this;
+
+    this->clear();
+    this->root_ = this->copy_depth_traversal(rhs.root_);
+    return *this;
+  }
+  AVL_Tree& operator= (AVL_Tree &&rhs) noexcept {
+    if (this == &rhs)
+      return *this;
+
+    std::swap(this->root_, rhs.root_);
+    return *this;
+  }
 
 private: // rotations
   int calc_height(avl_iterator node) const {
