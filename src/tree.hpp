@@ -69,7 +69,7 @@ protected: // traversal
         visited = visited_child_t::NONE;
         ++depth;
       } else {
-        bst_iterator parent = it != root ? it->parent_ : nullptr;
+        bst_iterator parent = it->parent_;
         if (parent) {
           assert(parent->left_ == it || parent->right_ == it);
           if (parent->left_ == it) {
@@ -85,6 +85,29 @@ protected: // traversal
           func(tmp, depth);
       }
     }
+  }
+
+  static void clear(bst_iterator &root) noexcept {
+    for (auto it = root; it != nullptr;) {
+      if (it->left_) {
+        it = it->left_;
+      } else if (it->right_) {
+        it = it->right_;
+      } else {
+        bst_iterator parent = it->parent_;
+        if (parent) {
+          assert(parent->left_ == it || parent->right_ == it);
+          if (parent->left_ == it) {
+            parent->left_ = nullptr;
+          } else {
+            parent->right_ = nullptr;
+          }
+        }
+        delete it;
+        it = parent;
+      }
+    }
+    root = nullptr;
   }
 
   bst_iterator copy_depth_traversal(bst_iterator root) {
@@ -118,13 +141,7 @@ protected: // traversal
 public: // ctors & dtors
   BST_Tree() noexcept {}
   virtual ~BST_Tree() {
-    depth_traversal(
-      root_,
-      order_t::POST,
-      [](bst_iterator it, size_t _) {
-        delete it;
-      }
-    );
+    clear();
   }
   BST_Tree(const BST_Tree &other) : root_(copy_depth_traversal(other.root_)) {}
   BST_Tree(BST_Tree &&other) noexcept : root_(other.root_) { other.root_ = nullptr; }
@@ -236,15 +253,8 @@ public: // selectors
   }
 
 public: // modifiers
-  void clear() {
-    depth_traversal(
-      root_,
-      order_t::POST,
-      [](bst_iterator it, size_t _) {
-        delete it;
-      }
-    );
-    root_ = end();
+  void clear() noexcept {
+    clear(root_);
   }
 
   virtual bst_iterator create_node(KeyT key) const {
