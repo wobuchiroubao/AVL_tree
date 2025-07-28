@@ -27,6 +27,8 @@ std::is_nothrow_copy_constructible<KeyT>::value)
 
 template <typename KeyT>
 struct AVL_Node final : public BST_Node<KeyT> {
+  using BST_Node<KeyT>::key_;
+
   int height_ = 1;
 
   explicit AVL_Node(const KeyT &key, AVL_Node *parent = nullptr, int height = 1) noexcept(
@@ -39,7 +41,7 @@ std::is_nothrow_copy_constructible<KeyT>::value)
   AVL_Node& operator= (AVL_Node &&rhs) = delete;
   ~AVL_Node() = default;
   AVL_Node *clone() const override {
-    return new AVL_Node<KeyT>{this->key_, nullptr, height_};
+    return new AVL_Node<KeyT>{key_, nullptr, height_};
   }
 };
 
@@ -357,6 +359,8 @@ std::ostream& operator<< (std::ostream& os, BST_Tree<KeyT>& tree) {
 
 template <typename KeyT>
 class AVL_Tree final : public BST_Tree<KeyT> {
+  using BST_Tree<KeyT>::root_;
+
   using bst_iterator = BST_Node<KeyT> *;
   using bst_const_iterator = const BST_Node<KeyT> *;
   using avl_iterator = AVL_Node<KeyT> *;
@@ -371,14 +375,14 @@ public: // ctors & dtors
       return *this;
 
     AVL_Tree tmp(rhs);
-    std::swap(this->root_, tmp.root_);
+    std::swap(root_, tmp.root_);
     return *this;
   }
   AVL_Tree& operator= (AVL_Tree &&rhs) noexcept {
     if (this == &rhs)
       return *this;
 
-    std::swap(this->root_, rhs.root_);
+    std::swap(root_, rhs.root_);
     return *this;
   }
 
@@ -406,8 +410,8 @@ private: // rotations
       }
       child->parent_ = sub_root_parent;
     } else {
-      assert(this->root_ == sub_root);
-      this->root_ = child;
+      assert(root_ == sub_root);
+      root_ = child;
       child->parent_ = nullptr;
     }
   }
@@ -495,8 +499,8 @@ private: // rotations
   }
 
 public: // selectors
-  avl_const_iterator root() const & override { return static_cast<avl_iterator>(this->root_); }
-  avl_iterator root() & override { return static_cast<avl_iterator>(this->root_); }
+  avl_const_iterator root() const & override { return static_cast<avl_iterator>(root_); }
+  avl_iterator root() & override { return static_cast<avl_iterator>(root_); }
   avl_const_iterator end() const & noexcept override { return nullptr; }
   avl_iterator end() & noexcept override { return nullptr; }
   avl_const_iterator find(KeyT key) const & override {
@@ -510,29 +514,29 @@ public: // selectors
       return static_cast<avl_const_iterator>(BST_Tree<KeyT>::lower_bound(key, root));
   }
 
-  avl_const_iterator lower_bound(KeyT key) const & override { return lower_bound(key, this->root_); }
+  avl_const_iterator lower_bound(KeyT key) const & override { return lower_bound(key, root_); }
 
   avl_iterator lower_bound(KeyT key, bst_iterator root) & override {
     return const_cast<avl_iterator>(const_cast<const AVL_Tree*>(this)->lower_bound(key, root));
   }
 
-  avl_iterator lower_bound(KeyT key) & override { return lower_bound(key, this->root_);}
+  avl_iterator lower_bound(KeyT key) & override { return lower_bound(key, root_);}
 
   avl_const_iterator upper_bound(KeyT key, bst_const_iterator root) const & override {
     return static_cast<avl_const_iterator>(BST_Tree<KeyT>::upper_bound(key, root));
   }
 
-  avl_const_iterator upper_bound(KeyT key) const & override { return upper_bound(key, this->root_); }
+  avl_const_iterator upper_bound(KeyT key) const & override { return upper_bound(key, root_); }
 
   avl_iterator upper_bound(KeyT key, bst_iterator root) & override {
     return const_cast<avl_iterator>(const_cast<const AVL_Tree*>(this)->upper_bound(key, root));
   }
 
-  avl_iterator upper_bound(KeyT key) & override { return upper_bound(key, this->root_); }
+  avl_iterator upper_bound(KeyT key) & override { return upper_bound(key, root_); }
 
   void dump(std::ostream& os) override {
     this->depth_traversal(
-      this->root_,
+      root_,
       BST_Tree<KeyT>::order_t::PRE,
       [this, &os](bst_iterator it, size_t depth) {
         os << std::string(depth, '\t');
@@ -601,8 +605,8 @@ public: // selectors
     // move successor on node's place
     assert(!node->parent_ || node->parent_->left_ == node || node->parent_->right_ == node);
     if (!node->parent_) {
-      assert(this->root_ == node);
-      this->root_ = successor;
+      assert(root_ == node);
+      root_ = successor;
     } else if (node->parent_->left_ == node) {
       node->parent_->left_ = successor;
     } else {
