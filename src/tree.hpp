@@ -10,10 +10,8 @@ struct BST_Node {
   KeyT key_;
   BST_Node *parent_ = nullptr, *left_ = nullptr, *right_ = nullptr;
 
-  explicit BST_Node(const KeyT &key, BST_Node *parent = nullptr) noexcept(
-std::is_nothrow_copy_constructible<KeyT>::value)
-    : key_(key)
-    , parent_(parent) {}
+  explicit BST_Node(const KeyT &key) noexcept(std::is_nothrow_copy_constructible<KeyT>::value) : key_(key) {}
+  explicit BST_Node(KeyT &&key) noexcept(std::is_nothrow_move_constructible<KeyT>::value) : key_(std::move(key)) {}
   virtual ~BST_Node() = default;
   BST_Node(const BST_Node &other) = delete;
   BST_Node(BST_Node &&other) = delete;
@@ -31,9 +29,11 @@ struct AVL_Node final : public BST_Node<KeyT> {
 
   int height_ = 1;
 
-  explicit AVL_Node(const KeyT &key, AVL_Node *parent = nullptr, int height = 1) noexcept(
-std::is_nothrow_copy_constructible<KeyT>::value)
-    : BST_Node<KeyT>{key, parent}
+  explicit AVL_Node(const KeyT &key, int height = 1) noexcept(std::is_nothrow_copy_constructible<KeyT>::value)
+    : BST_Node<KeyT>{key}
+    , height_(height) {}
+  explicit AVL_Node(KeyT &&key, int height = 1) noexcept(std::is_nothrow_move_constructible<KeyT>::value)
+    : BST_Node<KeyT>{std::move(key)}
     , height_(height) {}
   AVL_Node(const AVL_Node &other) = delete;
   AVL_Node(AVL_Node &&other) = delete;
@@ -41,7 +41,7 @@ std::is_nothrow_copy_constructible<KeyT>::value)
   AVL_Node& operator= (AVL_Node &&rhs) = delete;
   ~AVL_Node() = default;
   AVL_Node *clone() const override {
-    return new AVL_Node<KeyT>{key_, nullptr, height_};
+    return new AVL_Node<KeyT>{key_, height_};
   }
 };
 
@@ -176,19 +176,19 @@ public: // selectors
   virtual bst_const_iterator end() const & noexcept { return nullptr; }
   virtual bst_iterator end() & noexcept { return nullptr; }
   bool empty() const noexcept { return !root_; }
-  bool contains(KeyT key) const {
+  bool contains(const KeyT &key) const {
     bst_iterator node = find(key);
     return node != end();
   }
-  virtual bst_const_iterator find(KeyT key) const & {
+  virtual bst_const_iterator find(const KeyT &key) const & {
     bst_const_iterator lb = lower_bound(key);
     return (lb && lb->key_ == key) ? lb : end();
   }
-  virtual bst_iterator find(KeyT key) & {
+  virtual bst_iterator find(const KeyT &key) & {
     return const_cast<bst_iterator>(const_cast<const BST_Tree*>(this)->find(key));
   }
 
-  virtual bst_const_iterator lower_bound(KeyT key, bst_const_iterator root) const & {
+  virtual bst_const_iterator lower_bound(const KeyT &key, bst_const_iterator root) const & {
     if (empty())
       return end();
 
@@ -209,15 +209,15 @@ public: // selectors
     }
   }
 
-  virtual bst_const_iterator lower_bound(KeyT key) const & { return lower_bound(key, root_); }
+  virtual bst_const_iterator lower_bound(const KeyT &key) const & { return lower_bound(key, root_); }
 
-  virtual bst_iterator lower_bound(KeyT key, bst_iterator root) & {
+  virtual bst_iterator lower_bound(const KeyT &key, bst_iterator root) & {
     return const_cast<bst_iterator>(const_cast<const BST_Tree*>(this)->lower_bound(key, root));
   }
 
-  virtual bst_iterator lower_bound(KeyT key) & { return lower_bound(key, root_);}
+  virtual bst_iterator lower_bound(const KeyT &key) & { return lower_bound(key, root_);}
 
-  virtual bst_const_iterator upper_bound(KeyT key, bst_const_iterator root) const & {
+  virtual bst_const_iterator upper_bound(const KeyT &key, bst_const_iterator root) const & {
     if (empty())
       return end();
 
@@ -236,13 +236,13 @@ public: // selectors
     }
   }
 
-  virtual bst_const_iterator upper_bound(KeyT key) const & { return upper_bound(key, root_); }
+  virtual bst_const_iterator upper_bound(const KeyT &key) const & { return upper_bound(key, root_); }
 
-  virtual bst_iterator upper_bound(KeyT key, bst_iterator root) & {
+  virtual bst_iterator upper_bound(const KeyT &key, bst_iterator root) & {
     return const_cast<bst_iterator>(const_cast<const BST_Tree*>(this)->upper_bound(key, root));
   }
 
-  virtual bst_iterator upper_bound(KeyT key) & { return upper_bound(key, root_); }
+  virtual bst_iterator upper_bound(const KeyT &key) & { return upper_bound(key, root_); }
 
   virtual void dump(std::ostream& os) {
     depth_traversal(
@@ -265,14 +265,19 @@ public: // modifiers
   void clear() noexcept {
     clear(root_);
   }
-
-  virtual bst_iterator create_node(KeyT key) const {
-    return new BST_Node<KeyT>{key};
+  
+  virtual bst_iterator create_node(KeyT &&key) const {
+    return new BST_Node<KeyT>{std::move(key)};
   }
 
-  virtual bst_iterator insert(KeyT key) & {
+  virtual bst_iterator insert(const KeyT &key) & {
+    KeyT tmp(key);
+    return insert(std::move(tmp));
+  }
+
+  virtual bst_iterator insert(KeyT &&key) & {
     if (!root_) {
-      root_ = create_node(key);
+      root_ = create_node(std::move(key));
       return root_;
     }
 
@@ -280,7 +285,7 @@ public: // modifiers
     if (lb && lb->key_ == key)
       return lb;
 
-    bst_iterator new_node = create_node(key);
+    bst_iterator new_node = create_node(std::move(key));
     if (!lb) {
       for (auto it = root_;; it = it->right_) {
         if (!it->right_) {
@@ -305,7 +310,7 @@ public: // modifiers
     return new_node;
   }
 
-  virtual bool erase(KeyT key) & {
+  virtual bool erase(const KeyT &key) & {
     bst_iterator node = find(key);
     if (node == end())
       return false;
@@ -503,36 +508,36 @@ public: // selectors
   avl_iterator root() & override { return static_cast<avl_iterator>(root_); }
   avl_const_iterator end() const & noexcept override { return nullptr; }
   avl_iterator end() & noexcept override { return nullptr; }
-  avl_const_iterator find(KeyT key) const & override {
+  avl_const_iterator find(const KeyT &key) const & override {
     return static_cast<avl_const_iterator>(BST_Tree<KeyT>::find(key));
   }
-  avl_iterator find(KeyT key) & override {
+  avl_iterator find(const KeyT &key) & override {
     return const_cast<avl_iterator>(const_cast<const AVL_Tree*>(this)->find(key));
   }
 
-  avl_const_iterator lower_bound(KeyT key, bst_const_iterator root) const & override {
+  avl_const_iterator lower_bound(const KeyT &key, bst_const_iterator root) const & override {
       return static_cast<avl_const_iterator>(BST_Tree<KeyT>::lower_bound(key, root));
   }
 
-  avl_const_iterator lower_bound(KeyT key) const & override { return lower_bound(key, root_); }
+  avl_const_iterator lower_bound(const KeyT &key) const & override { return lower_bound(key, root_); }
 
-  avl_iterator lower_bound(KeyT key, bst_iterator root) & override {
+  avl_iterator lower_bound(const KeyT &key, bst_iterator root) & override {
     return const_cast<avl_iterator>(const_cast<const AVL_Tree*>(this)->lower_bound(key, root));
   }
 
-  avl_iterator lower_bound(KeyT key) & override { return lower_bound(key, root_);}
+  avl_iterator lower_bound(const KeyT &key) & override { return lower_bound(key, root_);}
 
-  avl_const_iterator upper_bound(KeyT key, bst_const_iterator root) const & override {
+  avl_const_iterator upper_bound(const KeyT &key, bst_const_iterator root) const & override {
     return static_cast<avl_const_iterator>(BST_Tree<KeyT>::upper_bound(key, root));
   }
 
-  avl_const_iterator upper_bound(KeyT key) const & override { return upper_bound(key, root_); }
+  avl_const_iterator upper_bound(const KeyT &key) const & override { return upper_bound(key, root_); }
 
-  avl_iterator upper_bound(KeyT key, bst_iterator root) & override {
+  avl_iterator upper_bound(const KeyT &key, bst_iterator root) & override {
     return const_cast<avl_iterator>(const_cast<const AVL_Tree*>(this)->upper_bound(key, root));
   }
 
-  avl_iterator upper_bound(KeyT key) & override { return upper_bound(key, root_); }
+  avl_iterator upper_bound(const KeyT &key) & override { return upper_bound(key, root_); }
 
   void dump(std::ostream& os) override {
     this->depth_traversal(
@@ -552,12 +557,17 @@ public: // selectors
     );
   }
 
-  avl_iterator create_node(KeyT key) const override {
-    return new AVL_Node<KeyT>{key};
+  avl_iterator create_node(KeyT &&key) const override {
+    return new AVL_Node<KeyT>{std::move(key)};
   }
 
-  avl_iterator insert(KeyT key) & override {
-    avl_iterator new_node = static_cast<avl_iterator>(BST_Tree<KeyT>::insert(key));
+  virtual avl_iterator insert(const KeyT &key) & {
+    KeyT tmp(key);
+    return insert(std::move(tmp));
+  }
+
+  avl_iterator insert(KeyT &&key) & override {
+    avl_iterator new_node = static_cast<avl_iterator>(BST_Tree<KeyT>::insert(std::move(key)));
     retrace(
       static_cast<avl_iterator>(new_node->parent_),
       [](int bf) { return (bf == 0); }
@@ -566,7 +576,7 @@ public: // selectors
     return new_node;
   }
 
-  bool erase(KeyT key) & override {
+  bool erase(const KeyT &key) & override {
     bst_iterator node = find(key);
     if (node == end())
       return false;
